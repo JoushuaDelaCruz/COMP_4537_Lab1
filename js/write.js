@@ -47,11 +47,11 @@ class Note {
   }
 
   #delete(e) {
-    Note.#deleteNote(e);
+    Note.deleteNote(e);
     Note.deleteFromStorage();
   }
 
-  static #deleteNote(e) {
+  static deleteNote(e) {
     e.target.parentNode.remove();
   }
 
