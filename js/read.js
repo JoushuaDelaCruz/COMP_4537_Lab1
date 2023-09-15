@@ -47,7 +47,8 @@ const loadStoredNotes = () => {
 
 const displayNotes = (notes) => {
   notes.forEach((note) => {
-    new Note(note.content).displayNote();
+    const newNote = new Note(note.content);
+    newNote.displayNote();
   });
 };
 

@@ -71,7 +71,8 @@ class Note {
 }
 
 const createNewNote = () => {
-  new Note().displayNote();
+  const newNote = new Note();
+  newNote.displayNote();
 };
 
 const getStoredNotes = () => {
