@@ -1,5 +1,4 @@
-const SERVER_URL =
-  "https://isa-server-lab4-f3b53ce2616e.herokuapp.com/api/v1/sql/";
+const SERVER_URL = "https://isa-lab5-fcc9adc2660b.herokuapp.com/api/v1/sql/";
 const makeRequest = (method, url, successHandler, errHandler) => {
   const xhr = new XMLHttpRequest();
   xhr.open(method, url, true);
