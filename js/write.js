@@ -1,116 +1,126 @@
-class Note {
-  constructor(content = "") {
-    this.content = content;
-  }
-  displayNote() {
-    const parentContainer = document.getElementById("notes-container");
-    const noteContainer = this.#createNoteContainer();
-    const inputContainer = this.#createInputContainer();
-    const deleteButton = this.#createButton();
-    noteContainer.appendChild(inputContainer);
-    noteContainer.appendChild(deleteButton);
-    parentContainer.appendChild(noteContainer);
-  }
+const SERVER = "http://localhost:3000";
+const LANGUAGE_PATH = "/api/v1/languages";
+const DEFINITION_PATH = "/api/v1/definition";
+const WORD_LANGUAGE_ID = "word-language";
+const WORD_ID = "word";
+const DEFINITION_ID = "definition";
+const DEFINITION_LANGUAGE_ID = "definition-language";
+const MAIN_ID = "main";
 
-  #createNoteContainer() {
-    const noteContainer = document.createElement("div");
-    noteContainer.className = "note-container";
-    return noteContainer;
-  }
+const getConfig = (method, body) => {
+  return {
+    method: method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  };
+};
 
-  #createInputContainer() {
-    const inputContainer = document.createElement("div");
-    inputContainer.className = "input-container";
-    const textarea = this.#createTextArea();
-    inputContainer.appendChild(textarea);
-    return inputContainer;
-  }
+const loadWordAlreadyExistsOptions = () => {
+  return `
+  <button type='submit' onclick='reDefine()'> ReDefine </button>
+  <button type='submit' onclick='cancelReDefine()'> Cancel </button>
+  <button type='submit' onclick='deleteWord()'> Delete Word </button>
+  `;
+};
 
-  #createTextArea() {
-    const textarea = document.createElement("textarea");
-    textarea.className = "note";
-    textarea.name = "var_1";
-    textarea.rows = "5";
-    textarea.cols = "10";
-    textarea.wrap = "soft";
-    textarea.innerHTML = this.content;
-    return textarea;
-  }
-
-  #createButton() {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "delete-note";
-    button.innerHTML = "Delete";
-    button.addEventListener("click", this.#delete);
-    return button;
-  }
-
-  #delete(e) {
-    Note.deleteNote(e);
-    Note.deleteFromStorage();
-  }
-
-  static deleteNote(e) {
-    e.target.parentNode.remove();
-  }
-
-  static deleteFromStorage() {
-    const notes = document.querySelectorAll("textarea");
-    if (notes.length === 0) {
-      localStorage.removeItem("notes");
-      return;
+const updateReq = (body) => {
+  const main = document.getElementsByTagName(MAIN_ID)[0];
+  fetch(`${SERVER}${DEFINITION_PATH}`, getConfig("PATCH", body)).then(
+    (response) => {
+      response.json().then((data) => {
+        main.innerHTML = JSON.stringify(data);
+      });
     }
-    const notesArray = [];
-    notes.forEach((noteElement) => {
-      const note = new Note(noteElement.value);
-      notesArray.push(note);
+  );
+};
+
+const postReq = (body) => {
+  const main = document.getElementsByTagName(MAIN_ID)[0];
+  fetch(`${SERVER}${DEFINITION_PATH}`, getConfig("POST", body)).then(
+    (response) => {
+      if (response.status === 201) {
+        response.json().then((data) => {
+          main.innerHTML = JSON.stringify(data);
+        });
+      } else if (response.status === 409) {
+        main.innerHTML = loadWordAlreadyExistsOptions();
+      }
+    }
+  );
+};
+
+const reDefine = () => {
+  const word = document.getElementById(WORD_ID).value;
+  const word_language = parseInt(
+    document.getElementById(WORD_LANGUAGE_ID).value
+  );
+  const definition = document.getElementById(DEFINITION_ID).value;
+  const definition_language = parseInt(
+    document.getElementById(DEFINITION_LANGUAGE_ID).value
+  );
+  const body = { word_language, definition, definition_language, word };
+  updateReq(body);
+};
+
+const deleteWord = () => {
+  const word = document.getElementById(WORD_ID).value;
+  const main = document.getElementsByTagName(MAIN_ID)[0];
+  fetch(`${SERVER}${DEFINITION_PATH}/`, getConfig("DELETE", { word })).then(
+    async (response) => {
+      if (response.status === 204) {
+        main.innerHTML = `Definition for '${word}' deleted`;
+        return;
+      }
+      response.json().then((data) => {
+        main.innerHTML = JSON.stringify(data);
+      });
+    }
+  );
+};
+
+const cancelReDefine = () => {
+  const main = document.getElementsByTagName(MAIN_ID)[0];
+  main.innerHTML = "";
+};
+
+const submitWord = () => {
+  const word = document.getElementById(WORD_ID).value;
+  const word_language = parseInt(
+    document.getElementById(WORD_LANGUAGE_ID).value
+  );
+  const definition = document.getElementById(DEFINITION_ID).value;
+  const definition_language = parseInt(
+    document.getElementById(DEFINITION_LANGUAGE_ID).value
+  );
+  const body = { word, word_language, definition, definition_language };
+  postReq(body);
+};
+
+const loadOption = (language) => {
+  const option = document.createElement("option");
+  option.value = language.id;
+  option.innerHTML = language.name;
+  return option;
+};
+
+const loadLanguages = () => {
+  const word_languages = document.getElementById(WORD_LANGUAGE_ID);
+  const definition_language = document.getElementById(DEFINITION_LANGUAGE_ID);
+  fetch(`${SERVER}${LANGUAGE_PATH}`)
+    .then((response) => {
+      response.json().then((data) => {
+        data.languages.forEach((language) => {
+          const option = loadOption(language);
+          word_languages.appendChild(option);
+          definition_language.appendChild(option.cloneNode(true));
+        });
+      });
+    })
+    .catch(() => {
+      alert("Error loading languages");
     });
-    localStorage.setItem("notes", JSON.stringify(notesArray));
-  }
-}
-
-const createNewNote = () => {
-  const newNote = new Note();
-  newNote.displayNote();
 };
 
-const getStoredNotes = () => {
-  const notes = localStorage.getItem("notes");
-  if (notes) {
-    const notesArray = [];
-    JSON.parse(notes).forEach((note) => {
-      notesArray.push(new Note(note.content));
-    });
-    return notesArray;
-  }
-  return [];
-};
-
-const loadStoredNotes = () => {
-  const notes = getStoredNotes();
-  notes.forEach((note) => {
-    note.displayNote();
-  });
-};
-
-const updateTime = () => {
-  const time = new Date();
-  const hours = time.getHours();
-  const minutes = time.getMinutes();
-  const seconds = time.getSeconds();
-  const timeString = `${hours}:${minutes}:${seconds}`;
-  document.getElementById("time").innerHTML = timeString;
-};
-
-const update = () => {
-  Note.deleteFromStorage();
-  updateTime();
-};
-
-setInterval(update, 2000);
-
-window.onload = () => {
-  updateTime();
-  loadStoredNotes();
-};
+window.onload = loadLanguages;
