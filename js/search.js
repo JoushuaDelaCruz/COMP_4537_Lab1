@@ -1,4 +1,4 @@
-const SERVER = "http://localhost:3000";
+const SERVER = "https://isa-server-lab4-f3b53ce2616e.herokuapp.com";
 const DEFINITION_PATH = "/api/v1/definition";
 
 const searchWord = () => {
